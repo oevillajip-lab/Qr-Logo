@@ -13,26 +13,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 1. Instalar librerías gráficas de Linux (CRUCIAL para Pillow)
       - name: Install Linux Libraries
         run: |
           sudo apt-get update
           sudo apt-get install -y libjpeg-dev zlib1g-dev
 
-      # 2. Python 3.12 para compatibilidad moderna
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      # 3. Instalar Flutter (Sin preguntas)
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      # 4. Instalar Dependencias (El paso que fallaba antes)
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -52,7 +48,6 @@ jobs:
           mkdir -p assets
           cp icon.png assets/icon.png
 
-      # 5. Compilar (Limpio, sin "yes |")
       - name: Build APK with Flet
         run: |
           flet build apk --verbose
@@ -60,5 +55,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: QR-Logo-APP-EXITO
+          name: QR-Logo-Funciona
           path: build/apk/app-release.apk

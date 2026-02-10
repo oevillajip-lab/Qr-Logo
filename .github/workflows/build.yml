@@ -13,22 +13,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 1. Librerías Linux (Anti-error de imágenes)
       - name: Install Linux Libraries
         run: |
           sudo apt-get update
           sudo apt-get install -y libjpeg-dev zlib1g-dev
 
+      # 2. Python 3.11 (El más estable)
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
+      # 3. FLUTTER CONGELADO (LA CLAVE DEL ÉXITO)
+      # Usamos la versión 3.24.3 que sabemos que NO da error de TabBarTheme
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.24.3'
           channel: 'stable'
           cache: true
 
+      # 4. Dependencias
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -48,6 +54,7 @@ jobs:
           mkdir -p assets
           cp icon.png assets/icon.png
 
+      # 5. Compilar
       - name: Build APK with Flet
         run: |
           flet build apk --verbose
@@ -55,5 +62,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: QR-Logo-Fixed-Version
+          name: QR-Logo-DEFINITIVO
           path: build/apk/app-release.apk

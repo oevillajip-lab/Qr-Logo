@@ -13,30 +13,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 1. Instalar librerías gráficas (Esto arregló el problema de imágenes)
       - name: Install Linux Libraries
         run: |
           sudo apt-get update
           sudo apt-get install -y libjpeg-dev zlib1g-dev
 
-      # 2. VOLVEMOS A PYTHON 3.11 (Es más estable para compilar que el 3.12)
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3. Flutter (Sin preguntas)
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      # 4. Dependencias
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flet
           pip install -r requirements.txt
 
       - name: Setup Java
@@ -53,7 +48,6 @@ jobs:
           mkdir -p assets
           cp icon.png assets/icon.png
 
-      # 5. Compilar
       - name: Build APK with Flet
         run: |
           flet build apk --verbose
@@ -61,5 +55,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: QR-Logo-Funciona-V3
+          name: QR-Logo-Fixed-Version
           path: build/apk/app-release.apk

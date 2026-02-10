@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # Actualizado a v4 para evitar errores de deprecación
+      # AQUÍ ESTÁ EL CAMBIO IMPORTANTE: checkout@v4
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -19,7 +19,7 @@ jobs:
           command: buildozer android debug
           buildozer_version: master
 
-      # Actualizado a v4 (AQUÍ ESTABA EL ERROR)
+      # AQUÍ ESTABA EL ERROR: upload-artifact@v4 (ANTES ERA v2)
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

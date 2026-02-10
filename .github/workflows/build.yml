@@ -8,8 +8,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Actualizado a v4 para evitar errores de deprecación
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Build with Buildozer
         uses: ArtemSBulgakov/buildozer-action@v1
@@ -18,8 +19,9 @@ jobs:
           command: buildozer android debug
           buildozer_version: master
 
+      # Actualizado a v4 (AQUÍ ESTABA EL ERROR)
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: QR-Logo-Kivy
           path: bin/*.apk

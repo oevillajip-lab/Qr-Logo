@@ -8,18 +8,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # AQUÍ ESTÁ EL CAMBIO IMPORTANTE: checkout@v4
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # CAMBIO CLAVE: Usamos 'kivymd' en lugar de 'ArtemSBulgakov'
+      # Esta versión NO tiene el error de "invalid user"
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
+        uses: kivymd/buildozer-action@v1
         id: buildozer
         with:
           command: buildozer android debug
           buildozer_version: master
 
-      # AQUÍ ESTABA EL ERROR: upload-artifact@v4 (ANTES ERA v2)
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

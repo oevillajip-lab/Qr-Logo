@@ -1,4 +1,4 @@
-name: Build Kivy APK Minimal
+name: Build Kivy APK Final
 on:
   push:
     branches: [ main ]
@@ -6,57 +6,65 @@ on:
 
 jobs:
   build:
+    # Usamos 22.04 porque es la más estable para Android NDK r25b
     runs-on: ubuntu-22.04
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Limpieza rápida
+      # 1. LIMPIEZA PROFUNDA (Evita que se cuelgue por falta de espacio)
       - name: Free Disk Space
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo docker image prune --all --force
 
-      # 2. INSTALACIÓN LIMPIA (SIN LIBRERÍAS MULTIMEDIA QUE DAN ERROR)
-      # Quitamos gstreamer, ffmpeg, sdl2. Solo dejamos herramientas de construcción.
+      # 2. INSTALACIÓN QUIRÚRGICA
+      # Incluimos automake y libltdl-dev que faltaban antes.
+      # Usamos OpenJDK 17 que es el estándar actual para Android.
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            python3-pip \
             build-essential \
             git \
-            python3 \
+            python3-pip \
             python3-dev \
             libffi-dev \
             libssl-dev \
+            libltdl-dev \
+            libtool \
+            automake \
+            autoconf \
+            pkg-config \
             zip \
             unzip \
-            autoconf \
-            libtool \
-            pkg-config \
             zlib1g-dev \
             libncurses5-dev \
             libncursesw5-dev \
             libtinfo5 \
+            cmake \
             openjdk-17-jdk
 
-      # 3. Instalar Buildozer
+      # 3. INSTALAR BUILDOZER
+      # Usamos pip directo para no depender de acciones externas
       - name: Install Buildozer
         run: |
           pip3 install --upgrade pip
           pip3 install --user --upgrade Cython==0.29.33 virtualenv
           pip3 install --user --upgrade buildozer
 
-      # 4. Construir la APK
+      # 4. COMPILAR (Con flag verbose para ver si falla algo específico)
       - name: Build APK
         run: |
           export PATH=$PATH:~/.local/bin
-          yes | buildozer android debug
+          # Yes acepta las licencias de Android SDK automáticamente
+          yes | buildozer android debug verbose
 
-      # 5. Subir la APK
+      # 5. SUBIR (Versión v4 que no da error)
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

@@ -6,7 +6,7 @@ import io
 import os
 import traceback
 
-# --- MOTOR GRÁFICO (El que funciona) ---
+# --- MOTOR GRÁFICO ---
 def hex_to_rgb(h):
     try:
         h = h.lstrip("#")
@@ -30,7 +30,7 @@ def generar_qr(data, logo_path, estilo):
                     else: draw.rectangle([x, y, x+40, y+40], fill=255)
 
         qr_img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-        qr_color = Image.new("RGBA", (size, size), (0, 0, 0, 255)) # Negro por defecto
+        qr_color = Image.new("RGBA", (size, size), (0, 0, 0, 255)) 
         qr_img.paste(qr_color, (0, 0), mask)
 
         if logo_path and os.path.exists(logo_path):
@@ -50,16 +50,20 @@ def generar_qr(data, logo_path, estilo):
 # --- APP PRINCIPAL ---
 def main(page: ft.Page):
     try:
-        # 1. CREACIÓN "VACÍA" (ESTO ARREGLA EL ERROR DE PANTALLA NEGRA)
+        # ==========================================
+        # SOLUCIÓN DEFINITIVA A LOS ERRORES
+        # ==========================================
+        
+        # 1. Crear VACÍOS (Arregla Error TypeError pantalla negra)
         picker_logo = ft.FilePicker()
         picker_save = ft.FilePicker()
 
-        # 2. AGREGAR A PANTALLA INVISIBLE (ESTO ARREGLA LA BARRA ROJA)
+        # 2. Registrar en Pantalla (Arregla Error Barra Roja)
         page.overlay.append(picker_logo)
         page.overlay.append(picker_save)
-        page.update() # Obligatorio actualizar aquí
+        page.update() # IMPORTANTE: Obligar a Android a reconocerlos
 
-        # 3. CONFIGURACIÓN DE LA PÁGINA
+        # 3. Configurar Página
         page.title = "QR Pro"
         page.theme_mode = "dark"
         page.bgcolor = "#111111"
@@ -70,7 +74,7 @@ def main(page: ft.Page):
         qr_bytes = None
         logo_path = ft.Text(visible=False)
 
-        # 4. ASIGNAR FUNCIONES AHORA (NO ANTES)
+        # 4. Asignar lógica AHORA (Post-creación)
         def on_logo_picked(e):
             if e.files:
                 logo_path.value = e.files[0].path
@@ -83,11 +87,14 @@ def main(page: ft.Page):
                 with open(e.path, "wb") as f: f.write(qr_bytes)
                 page.show_snack_bar(ft.SnackBar(ft.Text("¡Guardado!"), open=True))
 
-        # AQUÍ es donde se asigna, no en el paréntesis
+        # LA CLAVE: Asignar aquí, NO en el paréntesis
         picker_logo.on_result = on_logo_picked
         picker_save.on_result = on_save
 
-        # 5. CONTROLES VISUALES
+        # ==========================================
+        # INTERFAZ (Ya es seguro agregar cosas)
+        # ==========================================
+        
         txt_data = ft.TextField(label="Texto / Enlace", bgcolor="#222222")
         
         dd_style = ft.Dropdown(
@@ -99,6 +106,7 @@ def main(page: ft.Page):
             ]
         )
 
+        # Usamos lambda para llamar al picker
         btn_logo = ft.ElevatedButton("Subir Logo", icon="image", bgcolor="#333333", color="white", on_click=lambda _: picker_logo.pick_files())
         
         img_preview = ft.Image(width=280, height=280, visible=False, fit="contain")
@@ -120,7 +128,6 @@ def main(page: ft.Page):
 
         btn_gen = ft.ElevatedButton("GENERAR QR", bgcolor="green", color="white", height=50, on_click=generar)
 
-        # 6. ARMAR LA PANTALLA
         page.add(
             ft.Column([
                 ft.Text("QR + Logo Pro", size=24, weight="bold", color="white"),

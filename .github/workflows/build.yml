@@ -1,4 +1,4 @@
-name: Build Kivy APK
+name: Build Kivy APK Manual
 on:
   push:
     branches: [ main ]
@@ -7,21 +7,71 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # CAMBIO CLAVE: Usamos 'kivymd' en lugar de 'ArtemSBulgakov'
-      # Esta versión NO tiene el error de "invalid user"
-      - name: Build with Buildozer
-        uses: kivymd/buildozer-action@v1
-        id: buildozer
-        with:
-          command: buildozer android debug
-          buildozer_version: master
+      # 1. Liberar espacio (Android ocupa mucho)
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
+      # 2. Instalar dependencias del sistema (Lo básico)
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            build-essential \
+            git \
+            python3 \
+            python3-dev \
+            ffmpeg \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev \
+            libportmidi-dev \
+            libswscale-dev \
+            libavformat-dev \
+            libavcodec-dev \
+            zlib1g-dev \
+            libgstreamer1.0 \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            libffi-dev \
+            cmake \
+            libssl-dev \
+            zip \
+            unzip \
+            autoconf \
+            libtool \
+            pkg-config \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            openjdk-17-jdk
+
+      # 3. Instalar Buildozer y Cython (Las herramientas de Kivy)
+      - name: Install Buildozer & Cython
+        run: |
+          pip3 install --upgrade pip
+          pip3 install --user --upgrade Cython==0.29.33 virtualenv
+          pip3 install --user --upgrade buildozer
+
+      # 4. Construir la APK (El comando directo, forzando 'sí' a las licencias)
+      - name: Build APK
+        run: |
+          export PATH=$PATH:~/.local/bin
+          yes | buildozer android debug
+
+      # 5. Subir el resultado
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: QR-Logo-Kivy
+          name: QR-Logo-Kivy-Final
           path: bin/*.apk

@@ -6,13 +6,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # CAMBIO CLAVE: Usamos la versión 22.04 que es más compatible con Android/Kivy
+    runs-on: ubuntu-22.04
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Liberar espacio (Android ocupa mucho)
+      # 1. Liberar espacio
       - name: Free Disk Space
         run: |
           sudo rm -rf /usr/share/dotnet
@@ -20,7 +21,7 @@ jobs:
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      # 2. Instalar dependencias del sistema (Lo básico)
+      # 2. Instalar dependencias (Lista corregida para Ubuntu 22.04)
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -53,23 +54,22 @@ jobs:
             pkg-config \
             libncurses5-dev \
             libncursesw5-dev \
-            libtinfo5 \
             openjdk-17-jdk
 
-      # 3. Instalar Buildozer y Cython (Las herramientas de Kivy)
-      - name: Install Buildozer & Cython
+      # 3. Instalar Buildozer
+      - name: Install Buildozer
         run: |
           pip3 install --upgrade pip
           pip3 install --user --upgrade Cython==0.29.33 virtualenv
           pip3 install --user --upgrade buildozer
 
-      # 4. Construir la APK (El comando directo, forzando 'sí' a las licencias)
+      # 4. Construir la APK
       - name: Build APK
         run: |
           export PATH=$PATH:~/.local/bin
           yes | buildozer android debug
 
-      # 5. Subir el resultado
+      # 5. Subir la APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

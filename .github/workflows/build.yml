@@ -6,25 +6,29 @@ on:
 
 jobs:
   build:
-    # Usamos 22.04 porque es la más estable para Android NDK r25b
+    # Usamos Ubuntu 22.04 por estabilidad con Android NDK
     runs-on: ubuntu-22.04
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. LIMPIEZA PROFUNDA (Evita que se cuelgue por falta de espacio)
+      # 1. Liberar espacio en disco (Vital para Android SDK/NDK)
       - name: Free Disk Space
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          sudo docker image prune --all --force
 
-      # 2. INSTALACIÓN QUIRÚRGICA
-      # Incluimos automake y libltdl-dev que faltaban antes.
-      # Usamos OpenJDK 17 que es el estándar actual para Android.
+      # 2. Configurar Java 17 correctamente (Mejor que apt-get)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. Instalar dependencias del sistema (Lista exacta para Kivy)
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -46,25 +50,25 @@ jobs:
             libncurses5-dev \
             libncursesw5-dev \
             libtinfo5 \
-            cmake \
-            openjdk-17-jdk
+            cmake
 
-      # 3. INSTALAR BUILDOZER
-      # Usamos pip directo para no depender de acciones externas
+      # 4. Instalar Buildozer y Cython
       - name: Install Buildozer
         run: |
           pip3 install --upgrade pip
           pip3 install --user --upgrade Cython==0.29.33 virtualenv
           pip3 install --user --upgrade buildozer
 
-      # 4. COMPILAR (Con flag verbose para ver si falla algo específico)
+      # 5. Construir la APK (Añadido 'clean' para arreglar errores previos)
       - name: Build APK
         run: |
           export PATH=$PATH:~/.local/bin
-          # Yes acepta las licencias de Android SDK automáticamente
+          # Limpiamos caché corrupta del intento anterior
+          buildozer android clean
+          # Iniciamos compilación forzando aceptación de licencias
           yes | buildozer android debug verbose
 
-      # 5. SUBIR (Versión v4 que no da error)
+      # 6. Subir el resultado (Versión v4)
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

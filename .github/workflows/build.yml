@@ -6,14 +6,13 @@ on:
 
 jobs:
   build:
-    # Usamos Ubuntu 22.04 por estabilidad con Android NDK
     runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Liberar espacio en disco (Vital para Android SDK/NDK)
+      # 1. Liberar espacio
       - name: Free Disk Space
         run: |
           sudo rm -rf /usr/share/dotnet
@@ -21,14 +20,14 @@ jobs:
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      # 2. Configurar Java 17 correctamente (Mejor que apt-get)
+      # 2. Configurar Java 17
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Instalar dependencias del sistema (Lista exacta para Kivy)
+      # 3. Instalar Dependencias del Sistema
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -52,23 +51,20 @@ jobs:
             libtinfo5 \
             cmake
 
-      # 4. Instalar Buildozer y Cython
+      # 4. Instalar Buildozer
       - name: Install Buildozer
         run: |
           pip3 install --upgrade pip
           pip3 install --user --upgrade Cython==0.29.33 virtualenv
           pip3 install --user --upgrade buildozer
 
-      # 5. Construir la APK (Añadido 'clean' para arreglar errores previos)
+      # 5. Compilar APK (Sin el comando clean que daba error)
       - name: Build APK
         run: |
           export PATH=$PATH:~/.local/bin
-          # Limpiamos caché corrupta del intento anterior
-          buildozer android clean
-          # Iniciamos compilación forzando aceptación de licencias
           yes | buildozer android debug verbose
 
-      # 6. Subir el resultado (Versión v4)
+      # 6. Subir APK (Versión v4)
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

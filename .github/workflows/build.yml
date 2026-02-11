@@ -1,4 +1,4 @@
-name: Build Kivy APK Final
+name: Build Kivy APK Final v4
 on:
   push:
     branches: [ main ]
@@ -58,13 +58,13 @@ jobs:
           pip3 install --user --upgrade Cython==0.29.33 virtualenv
           pip3 install --user --upgrade buildozer
 
-      # 5. Compilar APK (Sin el comando clean que daba error)
+      # 5. Compilar APK (LIMPIO: Sin 'yes' ni 'verbose' que daban error al final)
       - name: Build APK
         run: |
           export PATH=$PATH:~/.local/bin
-          yes | buildozer android debug verbose
+          buildozer android debug
 
-      # 6. Subir APK (Versión v4)
+      # 6. Subir APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

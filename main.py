@@ -11,7 +11,6 @@ from kivy.uix.popup import Popup
 from kivy.uix.filechooser import FileChooserIconView
 from kivy.core.window import Window
 from kivy.utils import get_color_from_hex, get_hex_from_color
-from kivy.graphics import Color, RoundedRectangle
 import qrcode
 from PIL import Image as PilImage, ImageDraw, ImageOps, ImageFilter
 import io
@@ -19,15 +18,17 @@ import os
 import base64
 from kivy.utils import platform
 
-# --- PERMISOS ANDROID ---
+# --- PERMISOS ANDROID (PROTEGIDO) ---
 if platform == 'android':
-    from android.permissions import request_permissions, Permission
-    request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+    try:
+        from android.permissions import request_permissions, Permission
+        request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+    except Exception as e:
+        print(f"Error permisos: {e}")
 
 # ============================================================================
-# 1. MOTOR GRÁFICO PRO (TU LÓGICA INTACTA)
+# 1. MOTOR GRÁFICO (NO TOCAR - FUNCIONA BIEN)
 # ============================================================================
-# ... (Este bloque es idéntico al anterior, no lo toco) ...
 def hex_to_rgb(hex_col):
     try:
         h = hex_col.lstrip('#')
@@ -204,101 +205,81 @@ def generar_qr_full_engine(params, data_string):
         return None
 
 # ============================================================================
-# 2. INTERFAZ NATIVA MEJORADA
+# 2. INTERFAZ NATIVA (VERSIÓN ESTABLE Y SEGURA)
 # ============================================================================
 
 # Colores del Tema
 BG_COLOR = get_color_from_hex("#121212")
 CARD_COLOR = get_color_from_hex("#1E1E1E")
 TEXT_COLOR = get_color_from_hex("#FFFFFF")
-ACCENT_COLOR = get_color_from_hex("#00C853") # Verde moderno
+ACCENT_COLOR = get_color_from_hex("#00C853") # Verde
 INPUT_BG = get_color_from_hex("#2C2C2C")
 
-class RoundedButton(Button):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.background_color = (0,0,0,0) # Transparente para usar canvas
-        self.bg_color_norm = ACCENT_COLOR
-
-    def on_size(self, *args):
-        self.canvas.before.clear()
-        with self.canvas.before:
-            Color(*self.bg_color_norm)
-            RoundedRectangle(pos=self.pos, size=self.size, radius=[10])
-
-class StyledTextInput(TextInput):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.background_color = INPUT_BG
-        self.foreground_color = TEXT_COLOR
-        self.cursor_color = ACCENT_COLOR
-        self.hint_text_color = (0.6, 0.6, 0.6, 1)
-        self.padding = [10, 10]
-        self.background_normal = ''
-        self.background_active = ''
-        
 class QRApp(App):
     def build(self):
         Window.clearcolor = BG_COLOR
         self.root = BoxLayout(orientation='vertical')
         
         scroll = ScrollView(size_hint=(1, 1))
-        content = BoxLayout(orientation='vertical', size_hint_y=None, spacing=20, padding=20)
+        content = BoxLayout(orientation='vertical', size_hint_y=None, spacing=15, padding=20)
         content.bind(minimum_height=content.setter('height'))
 
-        # Header moderno
-        header = Label(text="QR Pro Generator", font_size='28sp', size_hint_y=None, height=60, bold=True, color=TEXT_COLOR)
+        # Header
+        header = Label(text="QR Pro Generator", font_size='26sp', size_hint_y=None, height=50, bold=True, color=TEXT_COLOR)
         content.add_widget(header)
 
         # --- SECCION 1: CONTENIDO ---
         self.add_section_title(content, "1. Contenido")
         
-        self.spin_tipo = Spinner(text="Sitio Web (URL)", values=("Sitio Web (URL)", "Red WiFi", "Texto Libre", "Teléfono", "E-mail"), size_hint_y=None, height=50, background_color=CARD_COLOR, color=TEXT_COLOR)
+        # Inputs estándar (sin clases raras que causan crash)
+        self.spin_tipo = Spinner(text="Sitio Web (URL)", values=("Sitio Web (URL)", "Red WiFi", "Texto Libre", "Teléfono", "E-mail"), size_hint_y=None, height=50, background_normal='', background_color=CARD_COLOR, color=TEXT_COLOR)
         self.spin_tipo.bind(text=self.update_inputs)
         content.add_widget(self.spin_tipo)
 
-        self.txt_1 = StyledTextInput(hint_text="Enlace (URL)", size_hint_y=None, height=50)
+        self.txt_1 = TextInput(hint_text="Enlace (URL)", size_hint_y=None, height=50, background_normal='', background_color=INPUT_BG, foreground_color=TEXT_COLOR, cursor_color=ACCENT_COLOR, multiline=False)
         content.add_widget(self.txt_1)
 
-        self.txt_2 = StyledTextInput(hint_text="Campo 2", size_hint_y=None, height=0, opacity=0)
+        self.txt_2 = TextInput(hint_text="Campo 2", size_hint_y=None, height=0, opacity=0, background_normal='', background_color=INPUT_BG, foreground_color=TEXT_COLOR)
         content.add_widget(self.txt_2)
 
-        self.txt_msg = StyledTextInput(hint_text="Mensaje", multiline=True, size_hint_y=None, height=0, opacity=0)
+        self.txt_msg = TextInput(hint_text="Mensaje", multiline=True, size_hint_y=None, height=0, opacity=0, background_normal='', background_color=INPUT_BG, foreground_color=TEXT_COLOR)
         content.add_widget(self.txt_msg)
 
         # --- SECCION 2: ESTILO ---
         self.add_section_title(content, "2. Estilo & Color")
-        self.spin_estilo = Spinner(text="Liquid Pro (Gusano)", values=("Liquid Pro (Gusano)", "Normal (Cuadrado)", "Barras (Vertical)", "Circular (Puntos)"), size_hint_y=None, height=50, background_color=CARD_COLOR, color=TEXT_COLOR)
+        self.spin_estilo = Spinner(text="Liquid Pro (Gusano)", values=("Liquid Pro (Gusano)", "Normal (Cuadrado)", "Barras (Vertical)", "Circular (Puntos)"), size_hint_y=None, height=50, background_normal='', background_color=CARD_COLOR, color=TEXT_COLOR)
         content.add_widget(self.spin_estilo)
 
-        self.spin_modo = Spinner(text="Automático (Logo)", values=("Automático (Logo)", "Sólido (Un Color)", "Degradado Custom"), size_hint_y=None, height=50, background_color=CARD_COLOR, color=TEXT_COLOR)
+        self.spin_modo = Spinner(text="Automático (Logo)", values=("Automático (Logo)", "Sólido (Un Color)", "Degradado Custom"), size_hint_y=None, height=50, background_normal='', background_color=CARD_COLOR, color=TEXT_COLOR)
         content.add_widget(self.spin_modo)
 
-        grid_colors = GridLayout(cols=2, spacing=10, size_hint_y=None, height=60)
-        self.btn_c1 = Button(text="Color 1", background_color=get_color_from_hex("#000000"))
+        grid_colors = GridLayout(cols=2, spacing=10, size_hint_y=None, height=50)
+        # Usamos botones estándar con background_normal='' para que acepten color plano sin texturas feas
+        self.btn_c1 = Button(text="Color 1", background_normal='', background_color=get_color_from_hex("#000000"))
         self.btn_c1.bind(on_release=lambda x: self.open_color_picker(self.btn_c1))
-        self.btn_c2 = Button(text="Color 2", background_color=get_color_from_hex("#3399ff"))
+        self.btn_c2 = Button(text="Color 2", background_normal='', background_color=get_color_from_hex("#3399ff"))
         self.btn_c2.bind(on_release=lambda x: self.open_color_picker(self.btn_c2))
         grid_colors.add_widget(self.btn_c1); grid_colors.add_widget(self.btn_c2)
         content.add_widget(grid_colors)
 
-        # --- SECCION 3 & 4: OJOS Y FONDO (Simplificado visualmente) ---
+        # --- SECCION 3: OJOS Y FONDO ---
         self.add_section_title(content, "3. Ojos y Fondo")
-        self.spin_ojos = Spinner(text="Ojos: Igual al Cuerpo", values=("Ojos: Igual al Cuerpo", "Ojos: Personalizados"), size_hint_y=None, height=50, background_color=CARD_COLOR)
+        self.spin_ojos = Spinner(text="Ojos: Igual al Cuerpo", values=("Ojos: Igual al Cuerpo", "Ojos: Personalizados"), size_hint_y=None, height=50, background_normal='', background_color=CARD_COLOR)
         content.add_widget(self.spin_ojos)
         
-        self.spin_bg = Spinner(text="Fondo: Blanco", values=("Fondo: Blanco", "Fondo: Transparente", "Fondo: Sólido"), size_hint_y=None, height=50, background_color=CARD_COLOR)
+        self.spin_bg = Spinner(text="Fondo: Blanco", values=("Fondo: Blanco", "Fondo: Transparente", "Fondo: Sólido"), size_hint_y=None, height=50, background_normal='', background_color=CARD_COLOR)
         content.add_widget(self.spin_bg)
 
-        # --- SECCION 5: LOGO ---
+        # --- SECCION 4: LOGO ---
         self.add_section_title(content, "4. Logo Personalizado")
-        self.btn_logo = Button(text="SELECCIONAR IMAGEN", size_hint_y=None, height=50, background_color=CARD_COLOR, color=TEXT_COLOR)
+        self.btn_logo = Button(text="SELECCIONAR IMAGEN", size_hint_y=None, height=50, background_normal='', background_color=CARD_COLOR, color=TEXT_COLOR)
         self.btn_logo.bind(on_release=self.show_file_chooser)
         content.add_widget(self.btn_logo)
         self.logo_path_val = ""
 
         # --- GENERAR ---
-        self.btn_gen = RoundedButton(text="GENERAR QR AHORA", size_hint_y=None, height=65, bold=True, font_size='18sp')
+        # Botón verde simple y robusto
+        self.btn_gen = Button(text="GENERAR QR AHORA", size_hint_y=None, height=60, bold=True, font_size='18sp', background_normal='', background_color=ACCENT_COLOR, color=(1,1,1,1))
         self.btn_gen.bind(on_release=self.generar)
         content.add_widget(self.btn_gen)
 
@@ -309,7 +290,7 @@ class QRApp(App):
         content.add_widget(self.img_container)
 
         # --- GUARDAR ---
-        self.btn_save = Button(text="GUARDAR IMAGEN", disabled=True, size_hint_y=None, height=50, background_color=get_color_from_hex("#007BFF"))
+        self.btn_save = Button(text="GUARDAR IMAGEN", disabled=True, size_hint_y=None, height=50, background_normal='', background_color=get_color_from_hex("#007BFF"))
         self.btn_save.bind(on_release=self.save_image)
         content.add_widget(self.btn_save)
 
@@ -318,19 +299,20 @@ class QRApp(App):
         return self.root
 
     def add_section_title(self, layout, text):
-        layout.add_widget(Label(text=text, color=ACCENT_COLOR, size_hint_y=None, height=35, halign='left', text_size=(Window.width-60, None), bold=True))
+        layout.add_widget(Label(text=text, color=ACCENT_COLOR, size_hint_y=None, height=30, halign='left', text_size=(Window.width-60, None), bold=True))
 
     # --- ARREGLO DEL SELECTOR DE ARCHIVOS ---
     def show_file_chooser(self, instance):
-        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        # IMPORTANTE: Filtros para ver solo imágenes
-        fc = FileChooserIconView(path='/storage/emulated/0/Download', filters=['*.png', '*.jpg', '*.jpeg', '*.PNG', '*.JPG'])
+        content = BoxLayout(orientation='vertical', padding=5, spacing=5)
+        
+        # Filtros para que solo muestre imágenes
+        fc = FileChooserIconView(path='/storage/emulated/0/Download', filters=['*.png', '*.jpg', '*.jpeg'])
         
         btn_box = BoxLayout(size_hint_y=None, height=50, spacing=10)
-        btn_cancel = Button(text="Cancelar", background_color=(0.5,0,0,1))
-        btn_select = Button(text="Seleccionar", background_color=(0,0.5,0,1))
+        btn_cancel = Button(text="Cancelar", background_normal='', background_color=(0.5,0,0,1))
+        btn_select = Button(text="Seleccionar", background_normal='', background_color=(0,0.5,0,1))
         
-        popup = Popup(title='Elige tu Logo (Imágenes)', content=content, size_hint=(0.95, 0.9))
+        popup = Popup(title='Elige tu Logo', content=content, size_hint=(0.95, 0.9))
         
         def select(instance):
             if fc.selection:
@@ -338,6 +320,9 @@ class QRApp(App):
                 self.btn_logo.text = f"Logo: {os.path.basename(self.logo_path_val)}"
                 self.btn_logo.background_color = get_color_from_hex("#006400")
                 popup.dismiss()
+            else:
+                # Si no selecciona nada pero le da a seleccionar (usar carpeta actual)
+                pass 
         
         btn_cancel.bind(on_release=popup.dismiss)
         btn_select.bind(on_release=select)
@@ -348,7 +333,6 @@ class QRApp(App):
         content.add_widget(btn_box)
         popup.open()
 
-    # --- LOGICA UI (Resto igual) ---
     def update_inputs(self, spinner, text):
         self.txt_2.height = 0; self.txt_2.opacity = 0; self.txt_msg.height = 0; self.txt_msg.opacity = 0
         self.txt_1.hint_text = "Texto"; self.txt_1.height = 50; self.txt_1.opacity = 1
@@ -367,12 +351,12 @@ class QRApp(App):
     def open_color_picker(self, target_btn):
         content = GridLayout(cols=4, spacing=5, padding=5)
         colors = ["#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF", "#333333", "#FFA500", "#800080", "#CCCCCC"]
-        popup = Popup(title='Selecciona Color', size_hint=(0.8, 0.4), background_color=CARD_COLOR)
+        popup = Popup(title='Selecciona Color', size_hint=(0.8, 0.4))
         def set_col(instance):
             target_btn.background_color = instance.background_color
             popup.dismiss()
         for c in colors:
-            btn = Button(background_color=get_color_from_hex(c))
+            btn = Button(background_normal='', background_color=get_color_from_hex(c))
             btn.bind(on_release=set_col)
             content.add_widget(btn)
         popup.content = content; popup.open()
@@ -409,13 +393,17 @@ class QRApp(App):
 
     def save_image(self, instance):
         if hasattr(self, 'last_pil_image'):
-            path = "/storage/emulated/0/Download/qr_gen_pro.png"
+            # Intento guardar en carpeta publica
             try:
+                path = "/storage/emulated/0/Download/qr_gen_pro.png"
                 self.last_pil_image.save(path)
-                self.btn_save.text = f"¡GUARDADO! (Ver Descargas)"
+                self.btn_save.text = f"¡GUARDADO EN DESCARGAS!"
                 self.btn_save.background_color = ACCENT_COLOR
-            except Exception as e:
-                self.btn_save.text = f"Error al guardar: {e}"
+            except:
+                # Si falla, guarda en user_data_dir (privado app)
+                path = os.path.join(App.get_running_app().user_data_dir, "qr_saved.png")
+                self.last_pil_image.save(path)
+                self.btn_save.text = f"Guardado interno: {path}"
 
 if __name__ == '__main__':
     QRApp().run()
